@@ -8,9 +8,11 @@
 	},
 	"dependencies": {
 		"cross-fetch": "^1.1.1",
+		"immutability-helper": "^2.5.1",
 		"lodash": "^4.17.4",
-		"react": "16.0.0",
+		"react": "16.1.1",
 		"react-native": "0.50.3",
+		"react-native-charts-wrapper": "^0.3.1",
 		"react-native-pathjs-charts": "^0.0.32",
 		"react-navigation": "^1.0.0-beta.19"
 	},

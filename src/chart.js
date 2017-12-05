@@ -8,8 +8,10 @@ import {
   StyleSheet,
   TextInput,
   TouchableHighlight,
+  processColor,
   Image
 } from "react-native";
+import { LineChart } from "react-native-charts-wrapper";
 import fetch from "cross-fetch";
 import _ from "lodash";
 
@@ -17,13 +19,13 @@ export default class App extends React.Component {
   static navigationOptions = ({ navigation, screenProps }) => ({
     title: "Meus bitcoins",
     headerLeft: (
-      <TouchableHighlight onPress={() => navigation.navigate('DrawerToggle')}>
+      <TouchableHighlight onPress={() => navigation.navigate("DrawerToggle")}>
         <Image
           source={require("./chats.png")}
           style={{
             width: 24,
             height: 24,
-            marginLeft: 10,
+            marginLeft: 10
           }}
         />
       </TouchableHighlight>
@@ -37,6 +39,7 @@ export default class App extends React.Component {
       touch: "none",
       currentBTC: "0",
       valorInvestido: "0",
+      marker: {},
       last: {
         last: 0
       },
@@ -99,8 +102,48 @@ export default class App extends React.Component {
       });
   }
 
+  getNewData() {
+    const values = this.state.btcHistory.map(({ x, y }) => {
+      const date = new Date(x * 1000);
+
+      const minutes =
+        date.getMinutes() > 9 ? date.getMinutes() : `0${date.getMinutes()}`;
+      x = `${date.getHours()}:${minutes}`;
+
+      console.log(x);
+      return {
+        x,
+        y: this.getMyBitcoins() * y
+      };
+    });
+
+    return {
+      dataSets: [
+        {
+          values,
+          label: "Company X",
+          config: {
+            lineWidth: 2,
+            drawCircles: true,
+            highlightColor: processColor("red"),
+            color: processColor("red"),
+            drawFilled: true,
+            fillColor: processColor("red"),
+            fillAlpha: 60,
+            valueTextSize: 0,
+            valueFormatter: "##.000",
+            dashedLine: {
+              lineLength: 1,
+              spaceLength: 1
+            }
+          }
+        }
+      ]
+    };
+  }
+
   getMyBitcoins() {
-    return parseFloat(this.state.currentBTC);
+    return parseFloat(this.state.currentBTC) || 1;
   }
 
   getCurrentValueBRL() {
@@ -132,7 +175,7 @@ export default class App extends React.Component {
         color: "#2980B9",
         fontWeight: "bold",
         marginLeft: 15
-      },
+      }
     };
 
     return (
@@ -150,6 +193,58 @@ export default class App extends React.Component {
     );
   }
 
+  handleSelect(event) {
+    let entry = event.nativeEvent;
+    if (entry == null) {
+      this.setState({ ...this.state, selectedEntry: null });
+    } else {
+      this.setState({ ...this.state, selectedEntry: JSON.stringify(entry) });
+    }
+  }
+
+  getxAxisFormatted() {
+    return this.state.btcHistory.map(({ x, y }) => {
+      const date = new Date(x * 1000);
+
+      const minutes =
+        date.getMinutes() > 9 ? date.getMinutes() : `0${date.getMinutes()}`;
+      return `${date.getHours()}:${minutes}`;
+    });
+  }
+
+  renderNewChart() {
+
+    return (
+      <LineChart
+        style={styles.chart}
+        data={this.getNewData()}
+        chartDescription={{ text: "" }}
+        marker={this.state.marker}
+        drawGridBackground={true}
+        borderColor={processColor("teal")}
+        borderWidth={1}
+        drawBorders={true}
+        touchEnabled={true}
+        dragEnabled={true}
+        scaleEnabled={true}
+        scaleXEnabled={true}
+        xAxis={{
+          valueFormatter: this.getxAxisFormatted(),
+          position: "BOTTOM",
+          granularityEnabled: true,
+          granularity: 1,
+          labelCount: 10
+        }}
+        scaleYEnabled={true}
+        pinchZoom={true}
+        doubleTapToZoomEnabled={true}
+        dragDecelerationEnabled={true}
+        dragDecelerationFrictionCoef={0.99}
+        keepPositionOnRotation={false}
+        onSelect={this.handleSelect.bind(this)}
+      />
+    );
+  }
   render() {
     const options = {
       width: 300,
@@ -210,14 +305,10 @@ export default class App extends React.Component {
     }
 
     return (
-      <View>
+      <View style={styles.container}>
         {this.renderCurrent()}
-        <StockLine
-          data={[this.state.btcHistory]}
-          options={options}
-          xKey="x"
-          yKey="y"
-        />
+        {this.renderNewChart()}
+
         <TouchableHighlight
           style={styles.button}
           onPress={this.getBTC}
@@ -251,8 +342,12 @@ const styles = {
     color: "white",
     alignSelf: "center"
   },
-  box: {
-    marginTop: 20,
-    marginBottom: 20
+  box: {},
+  container: {
+    flex: 1,
+    backgroundColor: "#F5FCFF"
+  },
+  chart: {
+    flex: 1
   }
 };
