@@ -38,7 +38,7 @@ export default class App extends React.Component {
       btcHistory: [],
       touch: "none",
       currentBTC: "0",
-      valorInvestido: "0",
+      valorInvestido: 1,
       marker: {},
       last: {
         last: 0
@@ -60,9 +60,9 @@ export default class App extends React.Component {
       })
     );
 
-    AsyncStorage.getItem("valorInvestido").then(valorInvestido =>
+    AsyncStorage.getItem("valorInvestido").then((valorInvestido) =>
       this.setState({
-        valorInvestido
+        valorInvestido: valorInvestido || 100
       })
     );
 
@@ -94,7 +94,8 @@ export default class App extends React.Component {
             y: parseFloat(ticker.last)
           }
         ];
-
+        // btcHistory = _.uniq(btcHistory, e => e.x);
+        btcHistory = _.uniqWith(btcHistory, _.isEqual);
         this.setState({
           btcHistory,
           last: ticker
@@ -104,24 +105,17 @@ export default class App extends React.Component {
 
   getNewData() {
     const values = this.state.btcHistory.map(({ x, y }) => {
-      const date = new Date(x * 1000);
-
-      const minutes =
-        date.getMinutes() > 9 ? date.getMinutes() : `0${date.getMinutes()}`;
-      x = `${date.getHours()}:${minutes}`;
-
-      console.log(x);
       return {
-        x,
         y: this.getMyBitcoins() * y
       };
     });
-
+    
+    
     return {
       dataSets: [
         {
-          values,
-          label: "Company X",
+          values: _.uniq(values, 'y'),
+          label: "BTC",
           config: {
             lineWidth: 2,
             drawCircles: true,
@@ -213,7 +207,6 @@ export default class App extends React.Component {
   }
 
   renderNewChart() {
-
     return (
       <LineChart
         style={styles.chart}

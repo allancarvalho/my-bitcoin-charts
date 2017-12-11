@@ -19,7 +19,7 @@ const HistoryStack = StackNavigator({
 });
 
 export default DrawerNavigator({
-  Config: {screen: ConfigStack},
   Chart: {screen: ChartStack},
+  Config: {screen: ConfigStack},
   History: {screen: HistoryStack},
 });
